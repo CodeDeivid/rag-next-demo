@@ -43,7 +43,7 @@ export function RagWorkspace() {
       >
         Skip to chat
       </a>
-      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-4 p-4 lg:h-dvh lg:min-h-0 lg:flex-none lg:grid-cols-[16rem_minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)]">
+      <main className="grid w-full flex-1 gap-4 p-4 lg:h-dvh lg:min-h-0 lg:flex-none lg:grid-cols-[16rem_minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)_26rem]">
         <h1 className="sr-only">RAG Next Demo</h1>
         <DocumentPanel {...docs} />
         <ChatPanel
