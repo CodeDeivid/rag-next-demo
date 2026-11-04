@@ -38,6 +38,16 @@ jobs:
   e2e:
     name: E2E and accessibility (axe)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: rag
+          POSTGRES_PASSWORD: rag
+          POSTGRES_DB: rag
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rag" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://rag:rag@localhost:5432/rag
       OPENROUTER_API_KEY: ci-placeholder
@@ -50,6 +60,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
