@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { BookOpen } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SourceCard } from "@/features/chat/components/sources/source-card";
+import { useHoveredCitation } from "@/features/chat/hooks/use-hovered-citation";
 import type { RagUIMessage, RetrievedChunk } from "@/features/rag/types";
 
 /** Citation n to bring into view; `key` changes on every click so the same n can flash again. */
@@ -19,94 +21,92 @@ type SourcesPanelProps = {
   isLatest: boolean;
   /** The selected answer is still streaming, so its sources may not have arrived yet. */
   pending: boolean;
+  /** Pinned by a citation click. */
   highlight: SourceHighlight | null;
+  /** Inside a mobile sheet: no card chrome, fills the sheet. */
+  bare: boolean;
 };
 
-export function SourcesPanel({ message, isLatest, pending, highlight }: SourcesPanelProps) {
+export function SourcesPanel({ message, isLatest, pending, highlight, bare }: SourcesPanelProps) {
+  const t = useTranslations("chat.sources");
   const chunks = message ? getSources(message) : null;
   const listRef = useRef<HTMLOListElement>(null);
+  const hovered = useHoveredCitation(message?.id ?? null);
+  const active = hovered ?? highlight?.n ?? null;
 
   useEffect(() => {
-    if (!highlight) return;
-    const card = listRef.current?.querySelector<HTMLElement>(`[data-source="${highlight.n}"]`);
+    if (active === null) return;
+    const card = listRef.current?.querySelector<HTMLElement>(`[data-source="${active}"]`);
     if (!card) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
-    // Move focus so keyboard users land on the excerpt they asked for.
-    card.focus({ preventScroll: true });
+  }, [active, highlight?.key]);
+
+  // A click (not a hover) moves focus so keyboard users land on the excerpt they asked for.
+  useEffect(() => {
+    if (!highlight) return;
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-source="${highlight.n}"]`)
+      ?.focus({ preventScroll: true });
   }, [highlight]);
 
   return (
-    <Card role="region" className="min-h-0" aria-labelledby="sources-title">
-      <CardHeader>
-        <CardTitle>
-          <h2 id="sources-title">Sources</h2>
-        </CardTitle>
-        <CardDescription aria-live="polite">
-          {!message
-            ? "Excerpts used for an answer appear here."
-            : isLatest
-              ? "For the latest answer."
-              : "For the selected answer."}
-        </CardDescription>
-      </CardHeader>
+    <section
+      aria-labelledby="sources-title"
+      className={cn(
+        "flex min-h-0 w-full flex-col",
+        bare ? "h-full max-h-[85dvh]" : "rounded-xl border bg-card",
+      )}
+    >
+      <header className="flex items-baseline gap-2 px-4 pt-4 pb-3">
+        <h2 id="sources-title" className="text-sm font-medium">
+          {t("title")}
+        </h2>
+        {chunks && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            {t("count", { count: chunks.length })}
+          </span>
+        )}
+        {message && (
+          <span className="ml-auto text-xs text-muted-foreground">
+            {isLatest ? t("latest") : t("selected")}
+          </span>
+        )}
+      </header>
 
-      <CardContent className="min-h-0 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
         {!message ? (
-          <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">
             <BookOpen className="mx-auto mb-2 size-5" aria-hidden />
-            Ask a question to see which chunks were retrieved.
+            {t("empty")}
           </div>
         ) : chunks === null ? (
-          <p className="text-sm text-muted-foreground">
-            {pending ? "Searching documents…" : "No sources for this answer."}
-          </p>
+          pending ? (
+            <div aria-busy="true" aria-label={t("searching")} className="flex flex-col gap-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-xl border p-3">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="mt-3 h-1.5 w-full" />
+                  <Skeleton className="mt-3 h-3 w-full" />
+                  <Skeleton className="mt-1.5 h-3 w-5/6" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("none")}</p>
+          )
         ) : chunks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No matching chunks were found for this question.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("noMatches")}</p>
         ) : (
           <ol ref={listRef} className="flex flex-col gap-3">
-            {chunks.map((chunk, i) => {
-              const n = i + 1;
-              const highlighted = highlight?.n === n;
-              return (
-                <li
-                  // Remount on each citation click so the flash animation replays.
-                  key={highlighted ? `${chunk.id}-${highlight.key}` : chunk.id}
-                  data-source={n}
-                  tabIndex={-1}
-                  aria-label={`Source ${n}: ${chunk.documentName}`}
-                  className={cn(
-                    "scroll-m-2 rounded-lg border p-3 outline-none",
-                    highlighted && "ring-2 ring-ring motion-safe:animate-source-flash",
-                  )}
-                >
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <span className="font-mono text-xs font-medium" aria-hidden>
-                      [{n}]
-                    </span>
-                    <span
-                      className="min-w-0 flex-1 truncate text-sm font-medium"
-                      title={chunk.documentName}
-                    >
-                      {chunk.documentName}
-                    </span>
-                    <Badge variant="outline" title="Similarity score (1 − cosine distance)">
-                      <span className="sr-only">Score </span>
-                      {chunk.score.toFixed(2)}
-                    </Badge>
-                  </div>
-                  <p className="mb-1 text-xs text-muted-foreground">Chunk #{chunk.chunkIndex}</p>
-                  <p className="line-clamp-6 text-sm whitespace-pre-line text-muted-foreground">
-                    {chunk.content}
-                  </p>
-                </li>
-              );
-            })}
+            {chunks.map((chunk, i) => (
+              <li key={chunk.id}>
+                <SourceCard chunk={chunk} n={i + 1} highlighted={active === i + 1} />
+              </li>
+            ))}
           </ol>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

@@ -38,7 +38,8 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   const sessionId = await getSessionId().catch(() => null);
-  if (!sessionId) return Response.json({ error: "No session" }, { status: 401 });
+  if (!sessionId)
+    return Response.json({ error: "No session", code: "no_session" }, { status: 401 });
   // Per session and per IP: dropping the cookie must not reset the budget.
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   try {
@@ -52,7 +53,10 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return Response.json(
+      { error: parsed.error.issues[0].message, code: "invalid_input" },
+      { status: 400 },
+    );
   }
   // Rebuild as text-only: a client-sent file/url part would make the server fetch that URL (SSRF).
   const messages: RagUIMessage[] = parsed.data.messages.map((m) => ({
@@ -69,7 +73,11 @@ export async function POST(req: Request) {
     .parts.flatMap((p) => (p.type === "text" ? [p.text] : []))
     .join("\n")
     .trim();
-  if (!question) return Response.json({ error: "the last message has no text" }, { status: 400 });
+  if (!question)
+    return Response.json(
+      { error: "the last message has no text", code: "empty_question" },
+      { status: 400 },
+    );
 
   const stream = createUIMessageStream<RagUIMessage>({
     execute: async ({ writer }) => {
