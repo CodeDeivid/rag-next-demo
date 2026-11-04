@@ -17,9 +17,16 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 test("error state has no WCAG 2.1 AA violations", async ({ page }) => {
   await page.route("**/api/documents", (route) =>
-    route.fulfill({ status: 500, json: { error: "Could not load documents." } }),
+    route.fulfill({
+      status: 500,
+      json: { error: "Could not load documents." },
+    }),
   );
-  await page.goto("/");
+  await page.goto("/en");
+  // Below lg the documents panel lives in a sheet opened from the header.
+  if ((page.viewportSize()?.width ?? 1280) < 1024) {
+    await page.getByRole("button", { name: "Documents", exact: true }).click();
+  }
   await expect(
     page.getByRole("alert").filter({ hasText: "Could not load documents." }),
   ).toBeVisible();
