@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Hidden folders hold tooling output (model cache, local worktrees), not source.
+    ".*/**",
   ]),
 ]);
 
