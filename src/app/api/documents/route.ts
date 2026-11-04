@@ -4,11 +4,18 @@ import { extractText } from "@/features/rag/server/extract-text";
 import { DocumentTooLongError, ingestDocument } from "@/features/rag/server/ingest-document";
 import { ensureExamples } from "@/features/rag/server/ensure-examples";
 import { listDocuments } from "@/features/rag/server/list-documents";
+import { getClientIp } from "@/features/rag/server/client-ip";
+import { purgeExpired } from "@/features/rag/server/purge-expired";
 import { consumeRateLimit, RateLimitedError } from "@/features/rag/server/rate-limit";
+import { LIMITS } from "@/features/rag/server/usage-limits";
 import { getSessionId, MissingSessionError } from "@/features/session/server/get-session-id";
 import type { DocumentErrorCode, UploadEvent } from "@/features/documents/types";
 
+// Embedding a large upload takes several API calls; the default 10s would cut it off.
+export const maxDuration = 60;
+
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_NAME_LENGTH = 120;
 
 const uploadSchema = z.object({
   file: z
@@ -16,7 +23,7 @@ const uploadSchema = z.object({
     .min(1, "The file is empty")
     .max(MAX_FILE_BYTES, "The file is larger than 5 MB")
     .refine(
-      (f) => /\.(md|markdown|txt|pdf)$/i.test(f.name),
+      (f) => /\.(md|markdown|txt|pdf)$/i.test(f.name) && f.name.length <= MAX_NAME_LENGTH,
       "Only .md, .markdown, .txt and .pdf are accepted",
     ),
 });
@@ -36,6 +43,8 @@ export async function GET() {
   const sessionId = await getSessionId().catch(() => null);
   if (!sessionId) return fail(401, "no_session", "No session");
   await ensureExamples().catch((error) => console.error("[examples]", error));
+  // Expiry must not depend on someone else uploading: clean up whenever the list is read.
+  await purgeExpired().catch((error) => console.error("[purge]", error));
   return Response.json({ documents: await listDocuments(sessionId) });
 }
 
@@ -47,7 +56,12 @@ export async function POST(req: Request) {
   let sessionId: string;
   try {
     sessionId = await getSessionId();
-    await consumeRateLimit(`upload:${sessionId}`, 10, 60 * 10);
+    for (const [key, { limit, windowSeconds }] of [
+      [`upload:${sessionId}`, LIMITS.uploadPerSession],
+      [`upload-ip:${getClientIp(req)}`, LIMITS.uploadPerIp],
+    ] as const) {
+      await consumeRateLimit(key, limit, windowSeconds);
+    }
   } catch (error) {
     if (error instanceof MissingSessionError) return fail(401, "no_session", "No session");
     if (error instanceof RateLimitedError) return fail(429, "rate_limited", error.message);
@@ -61,6 +75,8 @@ export async function POST(req: Request) {
     return fail(code === "file_too_large" ? 413 : 400, code, issue.message);
   }
   const { file } = parsed.data;
+  // Control characters in a name would end up in the prompt and in aria labels.
+  const fileName = file.name.replace(/[\u0000-\u001f\u007f]/g, "");
 
   const text = await extractText(file).catch(() => null);
   if (!text?.trim()) {
@@ -77,11 +93,13 @@ export async function POST(req: Request) {
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       send({ stage: "received" });
       try {
-        const result = await ingestDocument(file.name, text, sessionId, send);
+        const result = await ingestDocument(fileName, text, sessionId, send);
         send({ stage: "done", result });
       } catch (error) {
         if (error instanceof DocumentTooLongError) {
           send({ stage: "error", code: "document_too_long", error: error.message });
+        } else if (error instanceof RateLimitedError) {
+          send({ stage: "error", code: "rate_limited", error: error.message });
         } else {
           console.error("[upload]", error);
           send({ stage: "error", code: "upload_failed", error: "Upload failed" });

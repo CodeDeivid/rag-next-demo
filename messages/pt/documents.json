@@ -51,5 +51,6 @@
     "not_found": "Documento não encontrado.",
     "upload_failed": "O envio falhou. Tente de novo.",
     "unknown": "Algo deu errado. Tente de novo."
-  }
+  },
+  "privacy": "Seus documentos e feedbacks ficam presos a uma sessão anônima e são apagados sozinhos (documentos em 24 horas, feedbacks em 7 dias)."
 }

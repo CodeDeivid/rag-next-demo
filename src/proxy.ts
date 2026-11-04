@@ -1,15 +1,28 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/features/session/session-cookie";
+import { parseSessionId } from "@/features/session/session-id";
 import { routing } from "@/i18n/routing";
 
 const intl = createIntlMiddleware(routing);
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Pages get locale routing; every request (pages and API) gets an anonymous session,
 // which scopes all data on the server.
 export function proxy(request: NextRequest) {
-  const hasSession = UUID.test(request.cookies.get(SESSION_COOKIE)?.value ?? "");
+  // Mutating API calls must come from our own pages: SameSite=Lax already keeps the cookie off
+  // cross-site POSTs, this also stops a foreign page from spending a visitor's IP budget.
+  const origin = request.headers.get("origin");
+  if (
+    origin &&
+    request.nextUrl.pathname.startsWith("/api") &&
+    !["GET", "HEAD", "OPTIONS"].includes(request.method) &&
+    new URL(origin).host !== request.headers.get("host")
+  ) {
+    return NextResponse.json({ error: "Forbidden", code: "forbidden_origin" }, { status: 403 });
+  }
+
+  // Same validator as the routes: a cookie they would reject is replaced, never left to lock the visitor out.
+  const hasSession = parseSessionId(request.cookies.get(SESSION_COOKIE)?.value) !== null;
   const sessionId = hasSession ? null : crypto.randomUUID();
   // Set it on the request too, so the route handling this very request already sees it.
   if (sessionId) request.cookies.set(SESSION_COOKIE, sessionId);

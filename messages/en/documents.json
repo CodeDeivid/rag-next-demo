@@ -51,5 +51,6 @@
     "not_found": "Document not found.",
     "upload_failed": "Upload failed. Try again.",
     "unknown": "Something went wrong. Try again."
-  }
+  },
+  "privacy": "Your documents and feedback are tied to an anonymous session and deleted automatically (documents after 24 hours, feedback after 7 days)."
 }

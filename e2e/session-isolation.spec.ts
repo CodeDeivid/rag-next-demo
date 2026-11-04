@@ -1,6 +1,7 @@
 import { expect, request, test } from "@playwright/test";
 
 test("a session cannot list, search or delete another session's documents", async ({ baseURL }) => {
+  test.setTimeout(90_000); // the free embeddings API can be slow
   // Uploading needs real embeddings, so this runs only where an OpenRouter key is set.
   test.skip(!process.env.OPENROUTER_API_KEY?.startsWith("sk-"), "needs a real OPENROUTER_API_KEY");
   const alice = await request.newContext({ baseURL });

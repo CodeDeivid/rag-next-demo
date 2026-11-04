@@ -200,6 +200,7 @@ export function DocumentPanel({
             setToDelete(doc);
           }}
         />
+        <p className="mt-auto text-xs text-muted-foreground">{t("privacy")}</p>
 
         <p className="sr-only" aria-live="polite">
           {uploadStatus}

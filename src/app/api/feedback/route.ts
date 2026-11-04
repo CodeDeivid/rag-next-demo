@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { saveFeedback } from "@/features/feedback/server/feedback-store";
+import { getClientIp } from "@/features/rag/server/client-ip";
 import { consumeRateLimit, RateLimitedError } from "@/features/rag/server/rate-limit";
+import { LIMITS } from "@/features/rag/server/usage-limits";
 import { getSessionId } from "@/features/session/server/get-session-id";
 
 const bodySchema = z.object({
@@ -16,7 +18,13 @@ export async function POST(req: Request) {
   if (!sessionId)
     return Response.json({ error: "No session", code: "no_session" }, { status: 401 });
   try {
-    await consumeRateLimit(`feedback:${sessionId}`, 30, 60);
+    for (const [key, { limit, windowSeconds }] of [
+      [`feedback:${sessionId}`, LIMITS.feedbackPerSession],
+      [`feedback-day:${sessionId}`, LIMITS.feedbackPerSessionDaily],
+      [`feedback-ip:${getClientIp(req)}`, LIMITS.feedbackPerIp],
+    ] as const) {
+      await consumeRateLimit(key, limit, windowSeconds);
+    }
   } catch (error) {
     if (error instanceof RateLimitedError) {
       return Response.json({ error: "Too many requests", code: "rate_limited" }, { status: 429 });
