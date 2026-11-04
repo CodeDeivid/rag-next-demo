@@ -1,0 +1,21 @@
+{
+  "title": "Answer quality",
+  "description": "Ratings you gave to answers in this browser session. Nothing here is shared with other visitors.",
+  "approval": "Approval rate",
+  "approvalOf": "{positive} of {total} answers rated helpful",
+  "total": "Rated",
+  "positive": "Helpful",
+  "negative": "Not helpful",
+  "latestNegative": "Latest answers marked not helpful",
+  "question": "Question",
+  "answer": "Answer",
+  "comment": "Comment",
+  "noComment": "No comment",
+  "empty": {
+    "title": "No feedback yet",
+    "body": "Rate an answer with the thumbs up or down buttons in the chat and it shows up here.",
+    "cta": "Go to the chat"
+  },
+  "noNegative": "No answer was marked not helpful.",
+  "error": "Could not load the feedback. Reload the page to try again."
+}

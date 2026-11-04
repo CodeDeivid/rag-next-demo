@@ -1,0 +1,80 @@
+{
+  "title": "Ask your documents",
+  "empty": {
+    "intro": "Ask a question and the answer is written only from your documents, with a citation for every claim.",
+    "preloaded": "Two example policies (remote work and expenses) are already loaded. Try one of these:",
+    "noDocuments": "Upload a document first, then ask a question about it.",
+    "examples": [
+      "How many days a week can I work remotely?",
+      "What is the yearly learning budget?",
+      "Can I work from another country, and for how long?"
+    ]
+  },
+  "conversation": "Conversation",
+  "you": "You:",
+  "assistant": "Answer:",
+  "status": {
+    "searching": "Searching your documents…",
+    "writing": "Writing the answer…",
+    "done": "Answer complete",
+    "stopped": "Stopped"
+  },
+  "noAnswer": "No answer.",
+  "stoppedEarly": "Stopped before an answer.",
+  "notFound": {
+    "title": "Not in your documents",
+    "hint": "Try rephrasing the question, or upload a document that covers it."
+  },
+  "actions": {
+    "copy": "Copy answer",
+    "copied": "Copied",
+    "regenerate": "Regenerate answer",
+    "sources": "{count, plural, one {# source} other {# sources}}",
+    "sourcesShown": "shown"
+  },
+  "feedback": {
+    "up": "Helpful",
+    "down": "Not helpful",
+    "commentLabel": "What was wrong? (optional)",
+    "commentPlaceholder": "Missing detail, wrong source, unclear…",
+    "submit": "Send",
+    "cancel": "Cancel",
+    "thanks": "Thanks for the feedback",
+    "error": "Could not save the feedback. Try again."
+  },
+  "jumpToLatest": "Jump to latest",
+  "error": {
+    "title": "Answer interrupted",
+    "rateLimited": "The free model has a per-minute limit. Wait a minute and try again.",
+    "noSession": "Your session expired. Reload the page.",
+    "invalidInput": "The question could not be sent. Shorten it or start a new conversation.",
+    "generic": "Something went wrong while generating the answer.",
+    "partialKept": "The partial answer is kept above.",
+    "retry": "Retry"
+  },
+  "composer": {
+    "label": "Question",
+    "placeholder": "Ask about your documents…",
+    "send": "Send question",
+    "stop": "Stop generating",
+    "hint": "Enter to send · Shift+Enter new line · Esc to stop · {shortcut} focus"
+  },
+  "image": "image: {alt}",
+  "citation": "Source {n}: {name}",
+  "sources": {
+    "title": "Sources",
+    "count": "{count, plural, =0 {No excerpts} one {# excerpt} other {# excerpts}}",
+    "latest": "For the latest answer",
+    "selected": "For the selected answer",
+    "empty": "Ask a question to see which excerpts the answer was built from.",
+    "searching": "Searching your documents…",
+    "none": "No sources for this answer.",
+    "noMatches": "No matching excerpts were found for this question.",
+    "chunk": "Chunk #{index}",
+    "similarity": "Similarity",
+    "similarityHint": "Similarity score (1 − cosine distance)",
+    "card": "Source {n}: {name}",
+    "showMore": "Show more",
+    "showLess": "Show less"
+  }
+}
