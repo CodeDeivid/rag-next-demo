@@ -55,5 +55,21 @@ export function useDocuments() {
     [refresh],
   );
 
-  return { documents, loadError, upload, uploadFile, refresh };
+  /** Resolves to an error message, or null when the document is gone. */
+  const deleteDocument = useCallback(
+    async (id: string): Promise<string | null> => {
+      try {
+        const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+        // 404 means someone else already deleted it: the list just needs to catch up.
+        if (!res.ok && res.status !== 404) throw new Error(await readError(res, "Delete failed."));
+        await refresh();
+        return null;
+      } catch (err) {
+        return err instanceof Error ? err.message : "Delete failed.";
+      }
+    },
+    [refresh],
+  );
+
+  return { documents, loadError, upload, uploadFile, refresh, deleteDocument };
 }
