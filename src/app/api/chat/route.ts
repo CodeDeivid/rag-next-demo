@@ -39,7 +39,16 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return Response.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
-  const messages = parsed.data.messages as unknown as RagUIMessage[];
+  // Rebuild as text-only: a client-sent file/url part would make the server fetch that URL (SSRF).
+  const messages: RagUIMessage[] = parsed.data.messages.map((m) => ({
+    id: m.id,
+    role: m.role,
+    parts: m.parts.flatMap((p) =>
+      p.type === "text" && typeof p.text === "string"
+        ? [{ type: "text" as const, text: p.text }]
+        : [],
+    ),
+  }));
   const question = messages
     .at(-1)!
     .parts.flatMap((p) => (p.type === "text" ? [p.text] : []))
