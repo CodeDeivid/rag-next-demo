@@ -1,0 +1,11 @@
+{
+  // Tailwind 4 at-rules (@theme, @source, @custom-variant, @apply) are not plain CSS.
+  "files.associations": { "*.css": "tailwindcss" },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  // Workspace TypeScript so the Next.js plugin diagnostics match CI.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "tailwindCSS.experimental.classRegex": [["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"]]
+}
