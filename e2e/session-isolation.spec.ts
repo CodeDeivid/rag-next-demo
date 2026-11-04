@@ -13,7 +13,14 @@ test("a session cannot list, search or delete another session's documents", asyn
     },
   });
   expect(upload.ok()).toBe(true);
-  const { document } = await upload.json();
+  // The upload streams NDJSON progress; the last line carries the result.
+  const lines = (await upload.text())
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l));
+  const done = lines.at(-1);
+  expect(done.stage).toBe("done");
+  const { document } = done.result;
 
   const bobList = await (await bob.get("/api/documents")).json();
   expect(bobList.documents.map((d: { name: string }) => d.name)).not.toContain(name);

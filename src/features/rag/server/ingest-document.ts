@@ -22,12 +22,20 @@ const sha256 = (text: string) => createHash("sha256").update(text).digest("hex")
 /** Uploads expire so a public demo's database does not fill up. */
 export const UPLOAD_TTL_HOURS = 24;
 
+// Matches embedTexts' own batch size, so each call here is exactly one API request.
+const EMBED_BATCH_SIZE = 32;
+
+export type IngestProgress =
+  { stage: "chunking" } | { stage: "embedding"; done: number; total: number } | { stage: "saving" };
+
 /** `sessionId` null stores a shared, read-only example document. */
 export async function ingestDocument(
   name: string,
   text: string,
   sessionId: string | null,
+  onProgress?: (progress: IngestProgress) => void,
 ): Promise<UploadResult> {
+  onProgress?.({ stage: "chunking" });
   const pieces = chunkText(text).map((content, chunkIndex) => ({
     content,
     chunkIndex,
@@ -72,11 +80,20 @@ export async function ingestDocument(
 
     // Embedding is the slow part, so only new chunks get vectors.
     if (fresh.length) {
-      const vectors = await embedTexts(fresh.map((p) => p.content));
+      const vectors: number[][] = [];
+      onProgress?.({ stage: "embedding", done: 0, total: fresh.length });
+      for (let i = 0; i < fresh.length; i += EMBED_BATCH_SIZE) {
+        const batch = fresh.slice(i, i + EMBED_BATCH_SIZE).map((p) => p.content);
+        vectors.push(...(await embedTexts(batch)));
+        onProgress?.({ stage: "embedding", done: vectors.length, total: fresh.length });
+      }
+      onProgress?.({ stage: "saving" });
       await tx
         .insert(chunks)
         .values(fresh.map((p, i) => ({ ...p, documentId: doc.id, embedding: vectors[i] })));
     }
+
+    if (!fresh.length) onProgress?.({ stage: "saving" });
 
     // Unchanged chunks may have moved inside an edited file; keep "Chunk #n" accurate.
     await Promise.all(
