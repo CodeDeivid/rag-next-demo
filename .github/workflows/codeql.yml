@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  actions: read # private repos: CodeQL reads the workflow run it belongs to
 
 jobs:
   analyze:
