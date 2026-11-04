@@ -99,7 +99,8 @@ jobs:
 
   commits:
     name: Conventional commits
-    if: github.event_name == 'pull_request'
+    # Dependabot's commits are generated and squash merge keeps only the PR title.
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
