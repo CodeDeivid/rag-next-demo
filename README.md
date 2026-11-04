@@ -54,7 +54,8 @@ https://openrouter.ai/keys, then `pnpm db:up && pnpm db:migrate`.
 
 The first upload downloads the quantized embedding model (~120 MB) into `.cache/models`; after that
 embeddings work offline. To switch the answering model, change `OPENROUTER_MODEL` to any id ending in
-`:free`.
+`:free`. The default, Nemotron 3 Ultra, was the most faithful of the free models on the grounding,
+not-found and prompt-injection cases this demo cares about (Nov 2026); free models change often.
 
 **Try it:** upload the two fictional handbook pages in [`examples/`](examples) and ask
 "How much is the home office allowance and who gets it?" or "Can I expense a business class upgrade?".
