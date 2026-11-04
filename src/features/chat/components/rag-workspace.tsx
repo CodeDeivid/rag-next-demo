@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { LazyMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AppHeader } from "@/features/chat/components/app-header";
@@ -18,6 +19,9 @@ import type { RagUIMessage } from "@/features/rag/types";
  * Below lg: the chat fills the screen; documents and sources open as sheets.
  * CSS picks the layout (no JS breakpoint), so server and client render the same thing: no layout shift.
  */
+// Animation features load after first paint: the full motion bundle is ~160 KB gzipped.
+const loadMotionFeatures = () => import("@/features/chat/motion-features").then((m) => m.default);
+
 const isDesktop = () => window.matchMedia("(min-width: 64rem)").matches;
 
 export function RagWorkspace() {
@@ -67,50 +71,52 @@ export function RagWorkspace() {
   );
 
   return (
-    <div className="flex h-dvh flex-col">
-      <a
-        href="#question"
-        className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium ring-3 ring-ring/50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
-      >
-        {t("skipToChat")}
-      </a>
-      <AppHeader
-        onOpenDocuments={() => setDocsOpen(true)}
-        onOpenSources={() => setSourcesOpen(true)}
-        hasSources={!!selected}
-      />
-      <main className="grid min-h-0 flex-1 lg:grid-cols-[17rem_minmax(0,1fr)_21rem] lg:gap-4 lg:p-4 2xl:grid-cols-[19rem_minmax(0,1fr)_26rem]">
-        <div className="hidden min-h-0 lg:flex">
-          <DocumentPanel {...docs} bare={false} />
-        </div>
-        <ChatPanel
-          chat={chat}
-          hasDocuments={docs.documents ? docs.documents.length > 0 : null}
-          selectedId={selected?.id ?? null}
-          onSelect={select}
-          onCite={cite}
-          onShowSources={showSources}
+    <LazyMotion features={loadMotionFeatures} strict>
+      <div className="flex h-dvh flex-col">
+        <a
+          href="#question"
+          className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium ring-3 ring-ring/50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
+        >
+          {t("skipToChat")}
+        </a>
+        <AppHeader
+          onOpenDocuments={() => setDocsOpen(true)}
+          onOpenSources={() => setSourcesOpen(true)}
+          hasSources={!!selected}
         />
-        <div className="hidden min-h-0 lg:flex">{sourcesPanel(false)}</div>
-      </main>
+        <main className="grid min-h-0 flex-1 lg:grid-cols-[17rem_minmax(0,1fr)_21rem] lg:gap-4 lg:p-4 2xl:grid-cols-[19rem_minmax(0,1fr)_26rem]">
+          <div className="hidden min-h-0 lg:flex">
+            <DocumentPanel {...docs} bare={false} />
+          </div>
+          <ChatPanel
+            chat={chat}
+            hasDocuments={docs.documents ? docs.documents.length > 0 : null}
+            selectedId={selected?.id ?? null}
+            onSelect={select}
+            onCite={cite}
+            onShowSources={showSources}
+          />
+          <div className="hidden min-h-0 lg:flex">{sourcesPanel(false)}</div>
+        </main>
 
-      {/* Sheets mount their content only while open, so these cost nothing on desktop. */}
-      <Sheet open={docsOpen} onOpenChange={setDocsOpen}>
-        <SheetContent side="left" className="w-[min(22rem,90vw)] gap-0 p-0">
-          <SheetHeader className="sr-only">
-            <SheetTitle>{t("mobile.documents")}</SheetTitle>
-          </SheetHeader>
-          <DocumentPanel {...docs} bare />
-        </SheetContent>
-      </Sheet>
-      <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
-        <SheetContent side="bottom" className="max-h-[85dvh] gap-0 rounded-t-2xl p-0">
-          <SheetHeader className="sr-only">
-            <SheetTitle>{t("mobile.sources")}</SheetTitle>
-          </SheetHeader>
-          {sourcesPanel(true)}
-        </SheetContent>
-      </Sheet>
-    </div>
+        {/* Sheets mount their content only while open, so these cost nothing on desktop. */}
+        <Sheet open={docsOpen} onOpenChange={setDocsOpen}>
+          <SheetContent side="left" className="w-[min(22rem,90vw)] gap-0 p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("mobile.documents")}</SheetTitle>
+            </SheetHeader>
+            <DocumentPanel {...docs} bare />
+          </SheetContent>
+        </Sheet>
+        <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
+          <SheetContent side="bottom" className="max-h-[85dvh] gap-0 rounded-t-2xl p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("mobile.sources")}</SheetTitle>
+            </SheetHeader>
+            {sourcesPanel(true)}
+          </SheetContent>
+        </Sheet>
+      </div>
+    </LazyMotion>
   );
 }

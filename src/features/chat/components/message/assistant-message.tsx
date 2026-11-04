@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { Check, Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AnswerMarkdown } from "@/features/chat/components/answer-markdown";
+import dynamic from "next/dynamic";
 import { messageText } from "@/features/chat/components/message/message-text";
 import { NotFoundCard } from "@/features/chat/components/message/not-found-card";
 import { getSources } from "@/features/chat/components/sources-panel";
@@ -24,6 +24,15 @@ type AssistantMessageProps = {
   onShowSources: (messageId: string) => void;
   onRegenerate: () => void;
 };
+
+// The markdown renderer is ~150 KB gzipped and only needed once an answer exists.
+const AnswerMarkdown = dynamic(
+  () => import("@/features/chat/components/answer-markdown").then((m) => m.AnswerMarkdown),
+  {
+    ssr: false,
+    loading: () => <div className="h-5 w-2/3 animate-pulse rounded bg-muted" aria-hidden />,
+  },
+);
 
 export function AssistantMessage({
   message,

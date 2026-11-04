@@ -58,7 +58,8 @@ export function SourcesPanel({ message, isLatest, pending, highlight, bare }: So
         bare ? "h-full max-h-[85dvh]" : "rounded-xl border bg-card",
       )}
     >
-      <header className="flex items-baseline gap-2 px-4 pt-4 pb-3">
+      {/* In a sheet, the close button sits in the top-right corner: leave it room. */}
+      <header className={cn("flex items-baseline gap-2 px-4 pt-4 pb-3", bare && "pr-14")}>
         <h2 id="sources-title" className="text-sm font-medium">
           {t("title")}
         </h2>

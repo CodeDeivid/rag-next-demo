@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from "react";
 import { Loader2, RefreshCw, Upload } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {

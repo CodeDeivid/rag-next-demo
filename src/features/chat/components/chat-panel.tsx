@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
+import * as motion from "motion/react-m";
 import {
   AlertCircle,
   ArrowDown,
