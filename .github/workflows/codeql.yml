@@ -10,9 +10,12 @@ on:
 permissions:
   contents: read
   security-events: write
+  actions: read # private repos: CodeQL reads the workflow run it belongs to
 
 jobs:
   analyze:
+    # Free private repos can't upload code scanning results; runs once the repo is public.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

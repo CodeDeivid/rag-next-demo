@@ -183,8 +183,7 @@ export function ChatPanel({ chat, hasDocuments, selectedId, onSelect, onCite }: 
             <Alert variant="destructive" className="mt-4">
               <AlertCircle />
               <AlertTitle>Answer interrupted</AlertTitle>
-              {/* Full-strength colour: the default /90 dims below 4.5:1 on a light card. */}
-              <AlertDescription className="text-destructive">
+              <AlertDescription>
                 {errorText(error, last?.role === "assistant" && !!messageText(last))}
               </AlertDescription>
               <AlertAction>
