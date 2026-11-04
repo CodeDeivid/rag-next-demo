@@ -18,6 +18,13 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+// Absolute base for the link preview image and hreflang. Vercel provides the production host.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000";
+
 export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "common" });
@@ -25,7 +32,14 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
     title: t("appName"),
     applicationName: t("appName"),
     description: t("tagline"),
-    alternates: { languages: { pt: "/", en: "/en" } },
+    metadataBase: new URL(siteUrl),
+    alternates: { languages: { pt: "/", en: "/en", "x-default": "/" } },
+    openGraph: {
+      siteName: t("appName"),
+      locale: locale === "pt" ? "pt_BR" : "en_US",
+      type: "website",
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 
