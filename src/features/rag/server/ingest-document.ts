@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
-import { and, count, eq, inArray, notInArray } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, lt, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { chunks, documents } from "@/db/schema";
 import { chunkText } from "../core/chunk-text";
 import { embedTexts } from "./embedding-provider";
 import type { UploadResult } from "../types";
 
-// Embeddings run on the server CPU inside the request; this bounds one upload to a few seconds.
+// Each chunk is one call to the free embeddings API; this keeps one upload within its quota.
 export const MAX_CHUNKS_PER_DOCUMENT = 300;
 
 export class DocumentTooLongError extends Error {
@@ -19,7 +19,15 @@ export class DocumentTooLongError extends Error {
 
 const sha256 = (text: string) => createHash("sha256").update(text).digest("hex");
 
-export async function ingestDocument(name: string, text: string): Promise<UploadResult> {
+/** Uploads expire so a public demo's database does not fill up. */
+export const UPLOAD_TTL_HOURS = 24;
+
+/** `sessionId` null stores a shared, read-only example document. */
+export async function ingestDocument(
+  name: string,
+  text: string,
+  sessionId: string | null,
+): Promise<UploadResult> {
   const pieces = chunkText(text).map((content, chunkIndex) => ({
     content,
     chunkIndex,
@@ -32,10 +40,19 @@ export async function ingestDocument(name: string, text: string): Promise<Upload
   // One transaction: a failed embedding leaves no empty document behind. The upsert locks the
   // document row until commit, so two uploads of the same name run one after the other.
   return db.transaction(async (tx) => {
+    await tx
+      .delete(documents)
+      .where(
+        and(
+          isNotNull(documents.sessionId),
+          lt(documents.createdAt, sql`now() - make_interval(hours => ${UPLOAD_TTL_HOURS})`),
+        ),
+      );
+
     const [doc] = await tx
       .insert(documents)
-      .values({ name })
-      .onConflictDoUpdate({ target: documents.name, set: { name } }) // no-op so `returning` works
+      .values({ name, sessionId })
+      .onConflictDoUpdate({ target: [documents.sessionId, documents.name], set: { name } }) // no-op so `returning` works
       .returning();
 
     const known = await tx
@@ -90,7 +107,13 @@ export async function ingestDocument(name: string, text: string): Promise<Upload
       .where(eq(chunks.documentId, doc.id));
 
     return {
-      document: { id: doc.id, name: doc.name, chunkCount, createdAt: doc.createdAt.toISOString() },
+      document: {
+        id: doc.id,
+        name: doc.name,
+        chunkCount,
+        createdAt: doc.createdAt.toISOString(),
+        shared: doc.sessionId === null,
+      },
       chunksInserted: fresh.length,
       chunksSkipped: pieces.length - fresh.length,
     };

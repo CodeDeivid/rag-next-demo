@@ -150,19 +150,25 @@ export function DocumentPanel({
                 <Badge variant="secondary" aria-label={`${doc.chunkCount} chunks`}>
                   {doc.chunkCount}
                 </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground hover:text-destructive"
-                  aria-label={`Delete ${doc.name}`}
-                  onClick={() => {
-                    deletedRef.current = false;
-                    setDeleteError(null);
-                    setToDelete(doc);
-                  }}
-                >
-                  <Trash2 />
-                </Button>
+                {doc.shared ? (
+                  <Badge variant="outline" title="Shared example, available to everyone">
+                    Example
+                  </Badge>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label={`Delete ${doc.name}`}
+                    onClick={() => {
+                      deletedRef.current = false;
+                      setDeleteError(null);
+                      setToDelete(doc);
+                    }}
+                  >
+                    <Trash2 />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

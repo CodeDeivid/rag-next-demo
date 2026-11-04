@@ -6,6 +6,7 @@ const doc = {
   name: "handbook.md",
   chunkCount: 3,
   createdAt: "2026-11-04T00:00:00.000Z",
+  shared: false,
 };
 
 // API is mocked: this checks the UI flow, not the database (covered by the route itself).

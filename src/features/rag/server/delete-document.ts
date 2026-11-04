@@ -1,12 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { documents } from "@/db/schema";
 
-/** Deletes a document; its chunks go with it (ON DELETE CASCADE). Returns false when it did not exist. */
-export async function deleteDocument(id: string): Promise<boolean> {
+/** Deletes one of the session's documents (chunks go by cascade). False when missing, shared or someone else's. */
+export async function deleteDocument(id: string, sessionId: string): Promise<boolean> {
   const deleted = await db
     .delete(documents)
-    .where(eq(documents.id, id))
+    .where(and(eq(documents.id, id), eq(documents.sessionId, sessionId)))
     .returning({ id: documents.id });
   return deleted.length > 0;
 }

@@ -14,6 +14,8 @@ export type DocumentSummary = {
   name: string;
   chunkCount: number;
   createdAt: string; // ISO
+  /** Shared example: visible to everyone, cannot be deleted. */
+  shared: boolean;
 };
 
 export type UploadResult = {
