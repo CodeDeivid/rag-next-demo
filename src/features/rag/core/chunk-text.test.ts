@@ -55,4 +55,11 @@ describe("chunkText", () => {
       "Limits:\n- Meals: 60 USD\n- Hotels: 180 USD",
     ]);
   });
+  it("joins hard-wrapped lines but keeps headings and list items", () => {
+    const text =
+      "# Title\nIntro line one\ncontinues here.\n\nLimits:\n- First\n- Second item\nwrapped";
+    expect(chunkText(text)).toEqual([
+      "# Title\nIntro line one continues here.\n\nLimits:\n- First\n- Second item wrapped",
+    ]);
+  });
 });

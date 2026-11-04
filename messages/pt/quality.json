@@ -1,0 +1,21 @@
+{
+  "title": "Qualidade das respostas",
+  "description": "Avaliações que você deu às respostas nesta sessão do navegador. Nada daqui é visto por outros visitantes.",
+  "approval": "Taxa de aprovação",
+  "approvalOf": "{positive} de {total} respostas avaliadas como úteis",
+  "total": "Avaliadas",
+  "positive": "Úteis",
+  "negative": "Não ajudaram",
+  "latestNegative": "Últimas respostas que não ajudaram",
+  "question": "Pergunta",
+  "answer": "Resposta",
+  "comment": "Comentário",
+  "noComment": "Sem comentário",
+  "empty": {
+    "title": "Nenhuma avaliação ainda",
+    "body": "Avalie uma resposta com os botões de joinha no chat e ela aparece aqui.",
+    "cta": "Ir para o chat"
+  },
+  "noNegative": "Nenhuma resposta foi marcada como não útil.",
+  "error": "Não deu para carregar as avaliações. Recarregue a página."
+}

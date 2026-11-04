@@ -1,0 +1,80 @@
+{
+  "title": "Pergunte aos seus documentos",
+  "empty": {
+    "intro": "Faça uma pergunta e a resposta é escrita só a partir dos seus documentos, com citação em cada afirmação.",
+    "preloaded": "Duas políticas de exemplo (trabalho remoto e despesas, em inglês) já estão carregadas. Experimente:",
+    "noDocuments": "Envie um documento primeiro e depois pergunte sobre ele.",
+    "examples": [
+      "Quantos dias por semana posso trabalhar remoto?",
+      "Qual é o orçamento anual para cursos?",
+      "Posso trabalhar de outro país? Por quanto tempo?"
+    ]
+  },
+  "conversation": "Conversa",
+  "you": "Você:",
+  "assistant": "Resposta:",
+  "status": {
+    "searching": "Buscando nos seus documentos…",
+    "writing": "Escrevendo a resposta…",
+    "done": "Resposta concluída",
+    "stopped": "Interrompida"
+  },
+  "noAnswer": "Sem resposta.",
+  "stoppedEarly": "Interrompida antes da resposta.",
+  "notFound": {
+    "title": "Não está nos seus documentos",
+    "hint": "Tente reformular a pergunta ou envie um documento que trate do assunto."
+  },
+  "actions": {
+    "copy": "Copiar resposta",
+    "copied": "Copiado",
+    "regenerate": "Gerar de novo",
+    "sources": "{count, plural, one {# fonte} other {# fontes}}",
+    "sourcesShown": "exibindo"
+  },
+  "feedback": {
+    "up": "Útil",
+    "down": "Não ajudou",
+    "commentLabel": "O que faltou? (opcional)",
+    "commentPlaceholder": "Faltou detalhe, fonte errada, ficou confuso…",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "thanks": "Obrigado pelo retorno",
+    "error": "Não deu para salvar o retorno. Tente de novo."
+  },
+  "jumpToLatest": "Ir para o fim",
+  "error": {
+    "title": "Resposta interrompida",
+    "rateLimited": "O modelo gratuito tem limite por minuto. Espere um minuto e tente de novo.",
+    "noSession": "Sua sessão expirou. Recarregue a página.",
+    "invalidInput": "Não deu para enviar a pergunta. Encurte o texto ou comece uma nova conversa.",
+    "generic": "Algo deu errado ao gerar a resposta.",
+    "partialKept": "A resposta parcial ficou acima.",
+    "retry": "Tentar de novo"
+  },
+  "composer": {
+    "label": "Pergunta",
+    "placeholder": "Pergunte sobre os seus documentos…",
+    "send": "Enviar pergunta",
+    "stop": "Parar a resposta",
+    "hint": "Enter envia · Shift+Enter quebra linha · Esc para · {shortcut} foca"
+  },
+  "image": "imagem: {alt}",
+  "citation": "Fonte {n}: {name}",
+  "sources": {
+    "title": "Fontes",
+    "count": "{count, plural, =0 {Nenhum trecho} one {# trecho} other {# trechos}}",
+    "latest": "Da resposta mais recente",
+    "selected": "Da resposta selecionada",
+    "empty": "Faça uma pergunta para ver de quais trechos a resposta saiu.",
+    "searching": "Buscando nos seus documentos…",
+    "none": "Esta resposta não tem fontes.",
+    "noMatches": "Nenhum trecho combinou com a pergunta.",
+    "chunk": "Trecho #{index}",
+    "similarity": "Similaridade",
+    "similarityHint": "Similaridade (1 − distância de cosseno)",
+    "card": "Fonte {n}: {name}",
+    "showMore": "Ver mais",
+    "showLess": "Ver menos"
+  }
+}

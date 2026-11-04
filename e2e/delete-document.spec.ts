@@ -19,7 +19,11 @@ test.beforeEach(async ({ page }) => {
     deleted = true;
     return route.fulfill({ status: 204 });
   });
-  await page.goto("/");
+  await page.goto("/en");
+  // Below lg the panel lives in a sheet opened from the header.
+  if ((page.viewportSize()?.width ?? 1280) < 1024) {
+    await page.getByRole("button", { name: "Documents", exact: true }).click();
+  }
 });
 
 for (const colorScheme of ["light", "dark"] as const) {
@@ -53,5 +57,5 @@ test("delete removes the row, announces it and moves focus to upload", async ({ 
   await expect(page.getByRole("alertdialog")).toBeHidden();
   await expect(page.getByText("handbook.md", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Deleted handbook.md")).toBeAttached();
-  await expect(page.getByRole("button", { name: "Upload document" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Upload files" })).toBeFocused();
 });

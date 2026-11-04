@@ -16,7 +16,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "bootstrap": "node scripts/bootstrap.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.84",
@@ -27,7 +29,10 @@
     "cn": "0.5.1",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.66.0",
+    "motion": "14.4.0",
     "next": "16.4.4",
+    "next-intl": "4.14.9",
+    "next-themes": "0.4.6",
     "postgres": "^4.0.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -42,6 +47,9 @@
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@playwright/test": "^1.64.1",
+    "@storybook/addon-a11y": "10.6.3",
+    "@storybook/addon-themes": "10.6.3",
+    "@storybook/nextjs-vite": "10.6.3",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -54,8 +62,10 @@
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "storybook": "10.6.3",
     "tailwindcss": "^4",
     "typescript": "^6",
+    "vite": "^7.3.7",
     "vitest": "^5.1.0"
   },
   "packageManager": "pnpm@12.16.1",

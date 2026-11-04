@@ -4,6 +4,7 @@ import {
   integer,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   unique,
@@ -58,4 +59,23 @@ export const rateLimits = pgTable(
     count: integer("count").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
+);
+
+// One rating per answer per session; the question and answer are kept so a bad answer can be reviewed.
+export const feedback = pgTable(
+  "feedback",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id").notNull(),
+    messageId: text("message_id").notNull(),
+    rating: smallint("rating").notNull(), // 1 = helpful, -1 = not helpful
+    comment: text("comment"),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("feedback_session_message_unique").on(t.sessionId, t.messageId),
+    index("feedback_session_created_idx").on(t.sessionId, t.createdAt),
+  ],
 );

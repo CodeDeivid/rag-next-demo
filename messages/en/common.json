@@ -1,0 +1,9 @@
+{
+  "appName": "RAG Next Demo",
+  "tagline": "Chat with your documents. Every answer shows where it came from.",
+  "skipToChat": "Skip to chat",
+  "nav": { "chat": "Chat", "quality": "Quality", "github": "Code on GitHub" },
+  "theme": { "toggle": "Toggle theme", "light": "Light theme", "dark": "Dark theme" },
+  "language": { "label": "Language", "pt": "Português", "en": "English" },
+  "mobile": { "documents": "Documents", "sources": "Sources", "close": "Close" }
+}

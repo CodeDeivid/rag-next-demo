@@ -4,10 +4,18 @@ import { extractText } from "@/features/rag/server/extract-text";
 import { DocumentTooLongError, ingestDocument } from "@/features/rag/server/ingest-document";
 import { ensureExamples } from "@/features/rag/server/ensure-examples";
 import { listDocuments } from "@/features/rag/server/list-documents";
+import { getClientIp } from "@/features/rag/server/client-ip";
+import { purgeExpired } from "@/features/rag/server/purge-expired";
 import { consumeRateLimit, RateLimitedError } from "@/features/rag/server/rate-limit";
+import { LIMITS } from "@/features/rag/server/usage-limits";
 import { getSessionId, MissingSessionError } from "@/features/session/server/get-session-id";
+import type { DocumentErrorCode, UploadEvent } from "@/features/documents/types";
+
+// Embedding a large upload takes several API calls; the default 10s would cut it off.
+export const maxDuration = 60;
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_NAME_LENGTH = 120;
 
 const uploadSchema = z.object({
   file: z
@@ -15,58 +23,92 @@ const uploadSchema = z.object({
     .min(1, "The file is empty")
     .max(MAX_FILE_BYTES, "The file is larger than 5 MB")
     .refine(
-      (f) => /\.(md|markdown|txt|pdf)$/i.test(f.name),
+      (f) => /\.(md|markdown|txt|pdf)$/i.test(f.name) && f.name.length <= MAX_NAME_LENGTH,
       "Only .md, .markdown, .txt and .pdf are accepted",
     ),
 });
 
+const ISSUE_CODES: Record<string, DocumentErrorCode> = {
+  invalid_type: "file_missing",
+  too_small: "file_empty",
+  too_big: "file_too_large",
+  custom: "unsupported_type",
+};
+
+const fail = (status: number, code: DocumentErrorCode, error: string) =>
+  Response.json({ error, code }, { status });
+
 export async function GET() {
   await connection(); // always read the live list, never a build-time prerender
   const sessionId = await getSessionId().catch(() => null);
-  if (!sessionId) return Response.json({ error: "No session" }, { status: 401 });
+  if (!sessionId) return fail(401, "no_session", "No session");
   await ensureExamples().catch((error) => console.error("[examples]", error));
+  // Expiry must not depend on someone else uploading: clean up whenever the list is read.
+  await purgeExpired().catch((error) => console.error("[purge]", error));
   return Response.json({ documents: await listDocuments(sessionId) });
 }
 
 export async function POST(req: Request) {
   // Refuse before buffering the body; +64 KB leaves room for the multipart envelope.
   if (Number(req.headers.get("content-length") ?? 0) > MAX_FILE_BYTES + 64 * 1024) {
-    return Response.json({ error: "The file is larger than 5 MB" }, { status: 413 });
+    return fail(413, "file_too_large", "The file is larger than 5 MB");
   }
   let sessionId: string;
   try {
     sessionId = await getSessionId();
-    await consumeRateLimit(`upload:${sessionId}`, 10, 60 * 10);
+    for (const [key, { limit, windowSeconds }] of [
+      [`upload:${sessionId}`, LIMITS.uploadPerSession],
+      [`upload-ip:${getClientIp(req)}`, LIMITS.uploadPerIp],
+    ] as const) {
+      await consumeRateLimit(key, limit, windowSeconds);
+    }
   } catch (error) {
-    if (error instanceof MissingSessionError)
-      return Response.json({ error: "No session" }, { status: 401 });
-    if (error instanceof RateLimitedError)
-      return Response.json({ error: error.message }, { status: 429 });
+    if (error instanceof MissingSessionError) return fail(401, "no_session", "No session");
+    if (error instanceof RateLimitedError) return fail(429, "rate_limited", error.message);
     throw error;
   }
   const form = await req.formData().catch(() => null);
   const parsed = uploadSchema.safeParse({ file: form?.get("file") });
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    const issue = parsed.error.issues[0];
+    const code = ISSUE_CODES[issue.code] ?? "file_missing";
+    return fail(code === "file_too_large" ? 413 : 400, code, issue.message);
   }
   const { file } = parsed.data;
+  // Control characters in a name would end up in the prompt and in aria labels.
+  const fileName = file.name.replace(/[\u0000-\u001f\u007f]/g, "");
 
   const text = await extractText(file).catch(() => null);
   if (!text?.trim()) {
     return file.name.toLowerCase().endsWith(".pdf")
-      ? Response.json(
-          { error: "No extractable text in this PDF (scanned image?)" },
-          { status: 422 },
-        )
-      : Response.json({ error: "The file has no text" }, { status: 400 });
+      ? fail(422, "pdf_no_text", "No extractable text in this PDF (scanned image?)")
+      : fail(422, "no_text", "The file has no text");
   }
 
-  try {
-    return Response.json(await ingestDocument(file.name, text, sessionId));
-  } catch (error) {
-    if (error instanceof DocumentTooLongError) {
-      return Response.json({ error: error.message }, { status: 413 });
-    }
-    throw error;
-  }
+  // From here the response is a stream of progress lines, so failures become an `error` line.
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: UploadEvent) =>
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      send({ stage: "received" });
+      try {
+        const result = await ingestDocument(fileName, text, sessionId, send);
+        send({ stage: "done", result });
+      } catch (error) {
+        if (error instanceof DocumentTooLongError) {
+          send({ stage: "error", code: "document_too_long", error: error.message });
+        } else if (error instanceof RateLimitedError) {
+          send({ stage: "error", code: "rate_limited", error: error.message });
+        } else {
+          console.error("[upload]", error);
+          send({ stage: "error", code: "upload_failed", error: "Upload failed" });
+        }
+      }
+      controller.close();
+    },
+  });
+  return new Response(body, {
+    headers: { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" },
+  });
 }

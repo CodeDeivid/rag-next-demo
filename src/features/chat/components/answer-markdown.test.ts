@@ -1,11 +1,19 @@
-import { createElement } from "react";
+import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
+import chat from "../../../../messages/en/chat.json";
 import { AnswerMarkdown } from "@/features/chat/components/answer-markdown";
 
 const render = (text: string) =>
   renderToStaticMarkup(
-    createElement(AnswerMarkdown, { text, chunks: [], streaming: false, onCite: () => {} }),
+    createElement(
+      NextIntlClientProvider,
+      { locale: "en", messages: { chat } } as unknown as ComponentProps<
+        typeof NextIntlClientProvider
+      >,
+      createElement(AnswerMarkdown, { text, chunks: [], streaming: false, onCite: () => {} }),
+    ),
   );
 
 describe("AnswerMarkdown", () => {

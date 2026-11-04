@@ -1,6 +1,7 @@
 import { expect, request, test } from "@playwright/test";
 
 test("a session cannot list, search or delete another session's documents", async ({ baseURL }) => {
+  test.setTimeout(90_000); // the free embeddings API can be slow
   // Uploading needs real embeddings, so this runs only where an OpenRouter key is set.
   test.skip(!process.env.OPENROUTER_API_KEY?.startsWith("sk-"), "needs a real OPENROUTER_API_KEY");
   const alice = await request.newContext({ baseURL });
@@ -13,7 +14,14 @@ test("a session cannot list, search or delete another session's documents", asyn
     },
   });
   expect(upload.ok()).toBe(true);
-  const { document } = await upload.json();
+  // The upload streams NDJSON progress; the last line carries the result.
+  const lines = (await upload.text())
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l));
+  const done = lines.at(-1);
+  expect(done.stage).toBe("done");
+  const { document } = done.result;
 
   const bobList = await (await bob.get("/api/documents")).json();
   expect(bobList.documents.map((d: { name: string }) => d.name)).not.toContain(name);

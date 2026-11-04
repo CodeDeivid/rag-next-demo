@@ -19,7 +19,7 @@ export async function consumeRateLimit(key: string, limit: number, windowSeconds
     .returning({ count: rateLimits.count });
   // Old windows are useless; dropping them here keeps the table tiny without a cron job.
   if (row.count === 1) {
-    await db.delete(rateLimits).where(sql`${rateLimits.windowStart} < now() - interval '1 day'`);
+    await db.delete(rateLimits).where(sql`${rateLimits.windowStart} < now() - interval '2 days'`);
   }
   if (row.count > limit) throw new RateLimitedError("Too many requests, try again in a minute.");
 }

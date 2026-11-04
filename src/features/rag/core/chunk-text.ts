@@ -11,12 +11,14 @@ export function chunkText(
   if (size <= 0 || overlap < 0 || overlap >= size) {
     throw new Error("chunkText: overlap must be >= 0 and smaller than size");
   }
-  // Keep paragraph (\n\n) and line breaks: Markdown lists and headings depend on them.
+  // Keep paragraph breaks and the line breaks Markdown needs (before list items, quotes, code fences,
+  // and after headings). Any other single newline is a hard wrap (PDF extraction, 80-column files): join it.
   const clean = text
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/ ?\n ?/g, "\n")
     .replace(/\n{2,}/g, "\n\n")
+    .replace(/(?<!^#{1,6} [^\n]*)(?<!\n)\n(?!\n|[-*+>#|] |\d+[.)] |```)/gm, " ")
     .trim();
 
   const chunks: string[] = [];

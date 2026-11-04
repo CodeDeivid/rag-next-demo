@@ -29,17 +29,17 @@ src/features/chat (UI)  →  HTTP: /api/documents, /api/chat
 
 ## Server — `src/features/rag/server/`
 
-| Function                     | Responsibility                                                                                              |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `embedTexts(texts)`          | transformers.js, `Xenova/paraphrase-multilingual-MiniLM-L12-v2` q8, mean pooling, normalised, batches of 32 |
-| `getChatModel()`             | OpenRouter through `@ai-sdk/openai-compatible`; model id from `OPENROUTER_MODEL`                            |
-| `toChatErrorMessage(error)`  | 429 → `RATE_LIMIT_ERROR`, config error → its hint, anything else → generic text                             |
-| `extractText(file)`          | `.md`/`.markdown`/`.txt` as text, `.pdf` via unpdf                                                          |
-| `ingestDocument(name, text)` | One transaction: upsert document by name, embed only new chunk hashes, delete chunks no longer in the file  |
-| `searchChunks(query, k = 5)` | Embeds the query, orders by pgvector cosine distance                                                        |
-| `listDocuments()`            | Documents with chunk counts                                                                                 |
+| Function                                | Responsibility                                                                                                                            |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `embedTexts(texts)`                     | OpenRouter embeddings model (`OPENROUTER_EMBEDDING_MODEL`, default `nvidia/nemotron-3-embed-1b:free`, 2048 dimensions), batches of 32     |
+| `getChatModel()`                        | OpenRouter through `@ai-sdk/openai-compatible`; model id from `OPENROUTER_MODEL`                                                          |
+| `toChatErrorMessage(error)`             | 429 → `RATE_LIMIT_ERROR`, config error → its hint, anything else → generic text                                                           |
+| `extractText(file)`                     | `.md`/`.markdown`/`.txt` as text, `.pdf` via unpdf                                                                                        |
+| `ingestDocument(name, text, sessionId)` | One transaction: upsert the session's document by name, embed only new chunk hashes, delete chunks no longer in the file, report progress |
+| `searchChunks(query, sessionId, k = 5)` | Embeds the query; searches the session's documents plus the shared examples by cosine distance                                            |
+| `listDocuments(sessionId)`              | The session's documents plus shared examples, with chunk counts                                                                           |
 
-Swapping a provider means changing `embedTexts` or `getChatModel` only. Embedding dimension (384) is
+Swapping a provider means changing `embedTexts` or `getChatModel` only. The embedding dimension (2048, stored as `halfvec`) is
 pinned in `src/db/schema.ts`.
 
 ## HTTP
@@ -60,3 +60,18 @@ to the model. `req.signal` is passed to `streamText`, so Stop cancels the upstre
 list, and lays out three panels: documents, chat, sources. Answers render through Streamdown with a
 remark plugin that turns `[n]` into buttons linked to source card `n`. Raw HTML and images are not
 rendered.
+
+## Sessions and data ownership
+
+`src/proxy.ts` gives every visitor an anonymous `rag_session` cookie (`httpOnly`, `SameSite=Lax`) and
+handles locale routing. Route handlers read the id with `getSessionId()` and pass it to every query:
+documents, chunks and feedback belong to a session, while rows with a null `session_id` are shared,
+read-only examples indexed from `examples/` on first use. Uploads older than 24 hours are removed during
+ingestion, and rate limits are fixed-window counters in the `rate_limits` table, so they hold across
+serverless instances.
+
+## Upload progress
+
+`POST /api/documents` answers with NDJSON: `received`, `chunking`, `embedding` (done and total), `saving`,
+then `done` with the result or `error` with a code. Failures before the stream starts are plain JSON
+`{ error, code }`; the client translates by code.
