@@ -5,20 +5,25 @@ import { RATE_LIMIT_ERROR } from "../types";
 /** Our own config error: its message is safe and useful to show in the UI. */
 export class GenerationConfigError extends Error {}
 
-export function getChatModel(): LanguageModel {
+/** OpenRouter client shared by generation and embeddings. */
+export function getOpenRouter() {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const modelId = process.env.OPENROUTER_MODEL;
-  if (!apiKey || !modelId) {
-    throw new GenerationConfigError(
-      "OPENROUTER_API_KEY and OPENROUTER_MODEL must be set in .env (see .env.example)",
-    );
+  if (!apiKey) {
+    throw new GenerationConfigError("OPENROUTER_API_KEY must be set in .env (see .env.example)");
   }
-  const openrouter = createOpenAICompatible({
+  return createOpenAICompatible({
     name: "openrouter",
     baseURL: "https://openrouter.ai/api/v1",
     apiKey,
   });
-  return openrouter(modelId);
+}
+
+export function getChatModel(): LanguageModel {
+  const modelId = process.env.OPENROUTER_MODEL;
+  if (!modelId) {
+    throw new GenerationConfigError("OPENROUTER_MODEL must be set in .env (see .env.example)");
+  }
+  return getOpenRouter()(modelId);
 }
 
 function isRateLimit(error: unknown): boolean {

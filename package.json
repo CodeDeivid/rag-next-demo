@@ -22,7 +22,6 @@
     "@ai-sdk/openai-compatible": "^3.0.84",
     "@ai-sdk/react": "^4.0.166",
     "@base-ui/react": "^1.9.0",
-    "@huggingface/transformers": "^4.3.2",
     "ai": "^7.0.162",
     "class-variance-authority": "^0.7.1",
     "cn": "0.5.1",

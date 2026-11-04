@@ -1,19 +1,26 @@
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { chunks, documents } from "@/db/schema";
 import type { DocumentSummary } from "../types";
 
-export async function listDocuments(): Promise<DocumentSummary[]> {
+/** The session's own uploads plus the shared examples. */
+export async function listDocuments(sessionId: string): Promise<DocumentSummary[]> {
   const rows = await db
     .select({
       id: documents.id,
       name: documents.name,
       createdAt: documents.createdAt,
+      sessionId: documents.sessionId,
       chunkCount: count(chunks.id),
     })
     .from(documents)
     .leftJoin(chunks, eq(chunks.documentId, documents.id))
+    .where(or(eq(documents.sessionId, sessionId), isNull(documents.sessionId)))
     .groupBy(documents.id)
     .orderBy(desc(documents.createdAt));
-  return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+  return rows.map(({ sessionId: owner, ...r }) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+    shared: owner === null,
+  }));
 }
