@@ -59,3 +59,14 @@ test("security headers are present", async ({ baseURL }) => {
   expect(h["x-content-type-options"]).toBe("nosniff");
   expect(h["cross-origin-opener-policy"]).toBe("same-origin");
 });
+
+test("the link preview image is served without redirects in both languages", async ({
+  baseURL,
+}) => {
+  const ctx = await request.newContext({ baseURL, maxRedirects: 0 });
+  for (const path of ["/pt/opengraph-image", "/en/opengraph-image"]) {
+    const res = await ctx.get(path);
+    expect(res.status(), path).toBe(200);
+    expect(res.headers()["content-type"]).toContain("image/png");
+  }
+});

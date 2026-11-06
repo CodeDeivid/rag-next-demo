@@ -27,9 +27,12 @@ export function proxy(request: NextRequest) {
   // Set it on the request too, so the route handling this very request already sees it.
   if (sessionId) request.cookies.set(SESSION_COOKIE, sessionId);
 
-  const response = request.nextUrl.pathname.startsWith("/api")
-    ? NextResponse.next({ request })
-    : intl(request);
+  // The link preview image must be reachable at the exact URL the meta tag points to: crawlers such as
+  // WhatsApp's do not follow the redirect that strips the default locale prefix.
+  const skipLocaleRouting =
+    request.nextUrl.pathname.startsWith("/api") ||
+    /^\/(pt|en)\/opengraph-image/.test(request.nextUrl.pathname);
+  const response = skipLocaleRouting ? NextResponse.next({ request }) : intl(request);
 
   if (sessionId) {
     response.cookies.set(SESSION_COOKIE, sessionId, {
