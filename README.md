@@ -4,6 +4,8 @@
 [![CodeQL](https://github.com/CodeDeivid/rag-next-demo/actions/workflows/codeql.yml/badge.svg)](https://github.com/CodeDeivid/rag-next-demo/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**Live demo: https://rag-next-demo-eight.vercel.app** (Portuguese by default, `/en` for English)
+
 A chat over **your own documents** where every answer shows where it came from. Upload Markdown or
 text-based PDFs, ask in Portuguese or English, and get a streamed answer written only from your files,
 with numbered citations that highlight the exact excerpt and its similarity score.
