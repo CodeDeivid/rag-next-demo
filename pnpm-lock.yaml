@@ -211,9 +211,6 @@ importers:
       react-dom:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
-      shadcn:
-        specifier: ^4.23.0
-        version: 4.23.0(supports-color@7.2.0)
       streamdown:
         specifier: ^2.7.1
         version: 2.7.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)
@@ -284,6 +281,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
         version: 0.8.1(prettier@3.9.10)
+      shadcn:
+        specifier: ^4.23.0
+        version: 4.23.0(supports-color@7.2.0)
       storybook:
         specifier: 10.6.3
         version: 10.6.3(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.1)
