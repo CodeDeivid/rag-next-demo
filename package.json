@@ -50,7 +50,7 @@
     "@storybook/addon-themes": "10.6.3",
     "@storybook/nextjs-vite": "10.6.3",
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^18.0.9",
